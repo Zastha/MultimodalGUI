@@ -6,9 +6,10 @@ import threading
 import os
 
 class EEGRecorder:
-    def __init__(self, filename):
+    def __init__(self, filename, stop_signal_file):
         self.filename = filename
         self.stop_event = threading.Event()
+        self.stop_signal_file = stop_signal_file
 
     def start_recording(self):
         # Resolver y conectar al stream LSL 'AURAPSD'
@@ -37,6 +38,11 @@ class EEGRecorder:
             # Leer datos del stream y guardar en CSV
             try:
                 while not self.stop_event.is_set():
+                    if os.path.exists(self.stop_signal_file):
+                        self.stop_event.set()
+                        os.remove(self.stop_signal_file)
+                        break
+
                     sample, timestamp = inlet.pull_sample()
                     current_time = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S.%f')[:-3]  # Formato con milisegundos
                     sample_with_time = [current_time] + sample + [0]  # Añadir la marca de tiempo y un marcador de evento
@@ -55,8 +61,9 @@ if __name__ == "__main__":
 
     output_folder_path = sys.argv[1]
     filename = os.path.join(output_folder_path, "datos_psd2.csv")
+    stop_signal_file = os.path.join(output_folder_path, "stop_signal")
     os.makedirs(output_folder_path, exist_ok=True)
-    eeg_recorder = EEGRecorder(filename)
+    eeg_recorder = EEGRecorder(filename, stop_signal_file)
     eeg_thread = threading.Thread(target=eeg_recorder.start_recording)
 
     eeg_thread.start()

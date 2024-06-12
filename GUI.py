@@ -18,10 +18,10 @@ if len(sys.argv) != 2:
 output_folder_path = sys.argv[1]
 
 # List of videos
-video_list = sorted([f for f in os.listdir("assets") if f.startswith("vid") and f.endswith(".mkv")])
+video_list = sorted([f for f in os.listdir("assets") if f.startswith("vid") and f.endswith(".mp4")])
 first_video_duration = 10  # Duration in seconds for the first video
 video_duration = 5         # Duration in seconds for other videos
-neutral_video_path = os.path.join("assets", "neutral.mkv")
+neutral_video_path = os.path.join("assets", "neutral.mp4")
 
 # Dictionary to store user data
 user_data = {
@@ -70,27 +70,7 @@ def save_user_data():
         root.destroy()
         play_all_videos()
 
-# Add this function to display the thank you window
-def show_thank_you_window():
-    thank_you_window = tk.Toplevel()
-    thank_you_window.attributes('-fullscreen', True)
-    thank_you_window.configure(bg='white')
-
-    def end_program():
-        faceRec.stop_event.set()  # Detener el hilo de detección de emociones
-        root.destroy()
-        thank_you_window.destroy()
-        subprocess.run([python_interpreter, "EEGSaver.py", "stop"])  # Assuming you have a stop command for EEG recording
-
-    label = tk.Label(thank_you_window, text="Thank you for participating!", font=('Helvetica', 24), bg='white')
-    label.pack(pady=20)
-
-    button = tk.Button(thank_you_window, text="End", font=('Helvetica', 16), command=end_program)
-    button.pack(pady=20)
-
-    thank_you_window.mainloop()
-
-# Modify the save_to_csv function to call show_thank_you_window at the end
+# Function to save data to a CSV file at the end of the program
 def save_to_csv():
     global output_folder_path
     nombre = user_data["Nombre"]
@@ -123,13 +103,32 @@ def save_to_csv():
     # Show thank you window
     show_thank_you_window()
 
+# Add this function to display the thank you window
+def show_thank_you_window():
+    thank_you_window = tk.Toplevel()
+    thank_you_window.attributes('-fullscreen', True)
+    thank_you_window.configure(bg='white')
+
+    def end_program():
+        faceRec.stop_event.set()  # Detener el hilo de detección de emociones
+        thank_you_window.destroy()
+        subprocess.run([python_interpreter, "EEGSaver.py", "stop"])  # Assuming you have a stop command for EEG recording
+
+    label = tk.Label(thank_you_window, text="Thank you for participating!", font=('Helvetica', 24), bg='white')
+    label.pack(pady=20)
+
+    button = tk.Button(thank_you_window, text="End", font=('Helvetica', 16), command=end_program)
+    button.pack(pady=20)
+
+    thank_you_window.mainloop()
+
 # Function to play all videos
 def play_all_videos():
     for index, video in enumerate(video_list):
         video_path = os.path.join("assets", video)
         if index == 0:
             start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            play_video(video_path, first_video_duration)
+            play_video(video_path)
             user_data["Video_Data"].append({
                 "Video": f"Video {index+1}",
                 "Start Time": start_time,
@@ -165,8 +164,6 @@ def play_all_videos():
     # Detener el hilo de detección de emociones al finalizar todos los videos
     faceRec.stop_event.set()
     save_to_csv()  # Guardar los datos al final de todos los videos
-
-
 
 # Function to play video
 def play_video(video_path, duration=5):
@@ -293,3 +290,4 @@ button_next.grid(row=4, columnspan=4, pady=20)
 
 # Run the main loop
 root.mainloop()
+

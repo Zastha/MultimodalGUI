@@ -22,7 +22,7 @@ class faceRec:
         emotions_list = []
         timestamps = []
 
-        start_time = time.time()
+        start_time = datetime.datetime.now()
 
         while not faceRec.stop_event.is_set():
             # Capture frame-by-frame
@@ -36,7 +36,8 @@ class faceRec:
             # If emotions are detected, save the results
             if result:
                 emotions = result[0]['emotions']
-                timestamps.append(time.time() - start_time)
+                current_time = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S.%f')[:-3]  # Formato con milisegundos
+                timestamps.append(current_time)
                 emotions_list.append(emotions)
 
                 # Get the dominant emotion
@@ -60,7 +61,7 @@ class faceRec:
 
         # Save the emotion data to a pandas DataFrame and then to a CSV file
         df = pd.DataFrame(emotions_list)
-        df['timestamp'] = timestamps
+        df.insert(0, 'timestamp', timestamps)  # Insert the timestamps as the first column
         timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
         
         # Create the folder if it does not exist
